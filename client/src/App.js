@@ -1,5 +1,10 @@
 import React ,{Component}from 'react';
 import {Map,TileLayer,Marker,Popup} from "react-leaflet";
+import { Card, Button, CardTitle, CardText } from 'reactstrap';
+import { Col, Form, FormGroup, Label, Input, FormText } from 'reactstrap';
+
+
+import "bootstrap/dist/css/bootstrap.css"
 import  L from "leaflet";
 import './App.css';
 
@@ -20,6 +25,10 @@ class  App extends Component {
         },
 
         zoom: 13,
+        userMessage:{
+            name:'',
+            message:''
+        }
     }
 
     componentDidMount() {
@@ -50,9 +59,56 @@ class  App extends Component {
         })
     }
 
+    formSubmitted=(event) => {
+        event.preventDefault();
+        console.log(this.state.userMessage)
+    }
+
+    valueChanged=(event) => {
+        const {name,value }=event.target;
+
+        this.setState((prevState) =>({
+            userMessage:{
+                ...prevState.userMessage,
+                [name]:value
+            }
+        })
+        )
+    }
+
     render() {
         const position = [this.state.location.lat, this.state.location.lng]
         return (
+            <div className="map">
+                <Card body className="message-form">
+                    <CardTitle>Welcome to the My site </CardTitle>
+                    <CardText>Leave a message with your location !</CardText>
+                    <Form onSubmit={this.formSubmitted}>
+                        <FormGroup row>
+                            <Label for="name" >Name</Label>
+                            {/*<Col sm={10}>*/}
+                                <Input
+                                    onChange={this.valueChanged}
+                                    type="text"
+                                    name="name"
+                                    id="name"
+                                    placeholder="enter your name" />
+                            {/*</Col>*/}
+                        </FormGroup>
+                        <FormGroup row>
+                            <Label for="message" >Message</Label>
+                            {/*<Col sm={10}>*/}
+                                <Input
+                                    onChange={this.valueChanged}
+                                    type="textarea"
+                                    name="message"
+                                    id="message"
+                                    placeholder="enter your message" />
+                            {/*</Col>*/}
+                        </FormGroup>
+                        <Button type="submit" className="btn btn-primary" color="info">Send</Button>{' '}
+                    </Form>
+                </Card>
             <Map className="map" center={position} zoom={this.state.zoom}>
                 <TileLayer
                     attribution='&amp;copy <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
@@ -65,6 +121,7 @@ class  App extends Component {
                     </Popup>
                 </Marker>
             </Map>
+            </div>
         )
     }
 
