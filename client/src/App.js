@@ -56,6 +56,20 @@ class  App extends Component {
         fetch(API_URL)
             .then(res => res.json())
             .then(messages => {
+                const haveSeenLocation={};
+                    messages=messages.reduce((all, message) => {
+                        const key=`${message.latitude.toFixed(3)}+${message.longitude.toFixed(3)}`;
+                        if(haveSeenLocation[key]){
+                            haveSeenLocation[key].otherMessages=haveSeenLocation[key].otherMessages||[];
+
+
+                            haveSeenLocation[key].otherMessages.push(message);
+                        }else{
+                            haveSeenLocation[key]=messages;
+                            all.push(message)
+                        }
+                        return all;
+                },[])
                 this.setState({
                     messages
                 })
@@ -206,7 +220,9 @@ class  App extends Component {
                             position = {[message.latitude,message.longitude]}
                                 icon={clientIcon}>
                             <Popup>
-                                <em>{message.name}:</em> {message.message}
+                                <p><em>{message.name}:</em> {message.message}</p>
+                                {message.otherMessages?message.otherMessages.map(message =>
+                                    <p key={message._id}><em>{message.name}:</em> {message.message}</p>):""}
                             </Popup>
                         </Marker>
                     ))}
