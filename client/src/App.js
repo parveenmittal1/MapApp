@@ -1,13 +1,14 @@
 import React ,{Component}from 'react';
 import {Map,TileLayer,Marker,Popup} from "react-leaflet";
-import { Card, Button, CardTitle, CardText } from 'reactstrap';
-import { Col, Form, FormGroup, Label, Input, FormText } from 'reactstrap';
+
 import Joi from 'joi';
 import UserLocation from './mappin.svg'
 import clientLocation from './client.svg'
 import "bootstrap/dist/css/bootstrap.css"
 import  L from "leaflet";
 import './App.css';
+import {getMessages,getLocation,sendMessage} from './Api';
+import MessageCard from "./messageCard";
 
 const greenIcon = L.icon({
     iconUrl:UserLocation,
@@ -33,7 +34,6 @@ const schema = Joi.object().keys({
 })
 
 
-const API_URL=window.location.hostname==='localhost'?'http://localhost:5000/api/v1/messages':'prodution url';
 class  App extends Component {
     state = {
         location:{
@@ -52,53 +52,22 @@ class  App extends Component {
     }
 
     componentDidMount() {
-
-        fetch(API_URL)
-            .then(res => res.json())
-            .then(messages => {
-                const haveSeenLocation={};
-                    messages=messages.reduce((all, message) => {
-                        const key=`${message.latitude.toFixed(3)}+${message.longitude.toFixed(3)}`;
-                        if(haveSeenLocation[key]){
-                            haveSeenLocation[key].otherMessages=haveSeenLocation[key].otherMessages||[];
-
-
-                            haveSeenLocation[key].otherMessages.push(message);
-                        }else{
-                            haveSeenLocation[key]=messages;
-                            all.push(message)
-                        }
-                        return all;
-                },[])
+        getMessages()
+            .then(messages =>{
                 this.setState({
                     messages
                 })
             })
-        navigator.geolocation.getCurrentPosition((position)=>{
-            this.setState({
-                location: {
-                lat:    position.coords.latitude,
-                lng: position.coords.longitude
-                }
+
+
+        getLocation()
+            .then(location => {
+                this.setState({
+                    location,
+                })
             })
 
-            console.log(position )
-        },()=>{
-            console.log("oh this is the error ");
-            fetch("https://ipapi.co/json")
-            .then(res=>res.json())
-                .then(location => {
-                    console.log(location);
-                    this.setState({
-                        location: {
-                            lat: location.latitude,
-                            lng: location.longitude
-                        }
-                    })
-                })
-        },()=>{
 
-        })
 
     }
 
@@ -119,27 +88,21 @@ class  App extends Component {
              this.setState({
                  sendingMessage:true
              });
-             fetch(API_URL,{
-                 method:'post',
-                 headers: {
-                     'content-type':'application/json'
-                 },
-                 body:JSON.stringify({
-                         name: this.state.userMessage.name,
-                         message: this.state.userMessage.message,
-                     latitude:this.state.location.lat,
-                     longitude:this.state.location.lng,
-                 })
-             }).then(res=>res.json())
+             const message={
+                 name: this.state.userMessage.name,
+                     message: this.state.userMessage.message,
+                 latitude:this.state.location.lat,
+                 longitude:this.state.location.lng,
+             }
+             sendMessage(message)
                  .then(message=>{
-                     console.log(message);
-                     setTimeout(()=>{
-                         this.setState({
-                             sendingMessage:false,
-                             sentMessage:true
-                         })
-                     },4000);
-                 });
+                         setTimeout(()=>{
+                             this.setState({
+                                 sendingMessage:false,
+                                 sentMessage:true
+                             })
+                         },4000);
+                     });
          }
     }
     valueChanged=(event) => {
@@ -158,47 +121,7 @@ class  App extends Component {
         const position = [this.state.location.lat, this.state.location.lng]
         return (
             <div className="map">
-                <Card body className="message-form">
-                    <CardTitle>Welcome to the My site </CardTitle>
-                    <CardText>Leave a message with your location !</CardText>
-                    {
-                        !this.state.sendingMessage&&!this.state.sentMessage && !this.state.haveUserLoction?
-                    <Form onSubmit={this.formSubmitted}>
-                        <FormGroup row>
-                            <Label for="name" >Name</Label>
-                            {/*<Col sm={10}>*/}
-                            <Input
-                                onChange={this.valueChanged}
-                                type="text"
-                                name="name"
-                                id="name"
-                                placeholder="enter your name" />
-                            {/*</Col>*/}
-                        </FormGroup>
-                        <FormGroup row>
-                            <Label for="message" >Message</Label>
-                            {/*<Col sm={10}>*/}
-                            <Input
-                                onChange={this.valueChanged}
-                                type="textarea"
-                                name="message"
-                                id="message"
-                                placeholder="enter your message" />
-                            {/*</Col>*/}
-                        </FormGroup>
-                        <Button type="submit" className="btn btn-primary" color="info" disabled={!this.formIsValid()}>Send</Button>{' '}
-                    </Form> :
-                            this.state.sendingMessage || this.state.haveUserLoction?
-                                <video
-                                    autoPlay
-                                    loop
-                                    src="https://media.giphy.com/media/hWSQvXbDDh8rlnoLOt/giphy.mp4">
 
-                                </video>
-                                :<CardText>Thanks for submitting a message</CardText>
-
-                    }
-                </Card>
             <Map className="map" center={position} zoom={this.state.zoom}>
                 <TileLayer
                     attribution='&amp;copy <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
@@ -228,8 +151,17 @@ class  App extends Component {
                     ))}
                 }
             </Map>
+                <MessageCard
+                sendingMessage={this.setState.sendingMessage}
+                sentMessage={this.setState.sentMessage}
+                haveUsersLocation={this.setState.haveUsersLocation}
+                formSubmitted={this.formSubmitted}
+                valueChanged={this.valueChanged}
+                formIsValid={this.formIsValid}
+                />
+
             </div>
-        )
+        );
 
     }
 }
