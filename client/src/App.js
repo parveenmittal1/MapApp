@@ -1,6 +1,6 @@
 import React ,{Component}from 'react';
 import {Map,TileLayer,Marker,Popup} from "react-leaflet";
-
+import {Card,CardText} from 'reactstrap';
 import Joi from 'joi';
 import UserLocation from './mappin.svg'
 import clientLocation from './client.svg'
@@ -159,7 +159,11 @@ class  App extends Component {
                 valueChanged={this.valueChanged}
                 formIsValid={this.formIsValid}
                 />
-
+                <Card className="footer">
+                    <CardText>Made with love by
+                        <a href="https://github.com/parveenmittal1" target="_blank">Parveen</a>
+            </CardText>
+                </Card>
             </div>
         );
 
